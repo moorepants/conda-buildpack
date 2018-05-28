@@ -108,7 +108,7 @@ mkdir -p $(dirname $PROFILE_PATH)
 
 if [ ! -d /app/.heroku/miniconda ]; then
     puts-step "Preparing Python/Miniconda Environment"
-    bash <(curl -s https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh) -p /app/.heroku/miniconda/ -b | indent
+    bash <(curl -s https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh) -p /app/.heroku/miniconda/ -b
 fi
 
 puts-step "Creating conda environment"

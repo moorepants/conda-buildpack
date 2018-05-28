@@ -8,8 +8,6 @@
 # Fail fast and fail hard.
 set -eo pipefail
 
-shopt -s extglob
-
 # Prepend proper path for virtualenv hackery. This will be deprecated soon.
 export PATH=:/usr/local/bin:$PATH
 
@@ -30,6 +28,8 @@ unset GIT_DIR PYTHONHOME PYTHONPATH LD_LIBRARY_PATH LIBRARY_PATH
 # We'll need to send these statics to other scripts we `source`.
 export BUILD_DIR CACHE_DIR BIN_DIR PROFILE_PATH
 
+shopt -s extglob
+
 [ $(uname) == "Darwin" ] && SED_FLAG='-l' || SED_FLAG='-u'
 
 # Syntax sugar.
@@ -38,8 +38,34 @@ indent() {
   sed $SED_FLAG "$RE"
 }
 
+# Clean up pip output
+cleanup() {
+  sed $SED_FLAG -e 's/\.\.\.\+/.../g' | sed $SED_FLAG '/already satisfied/Id' | sed $SED_FLAG -e '/Overwriting/Id' |  sed $SED_FLAG -e '/python executable/Id' | sed $SED_FLAG -e '/no previously-included files/Id'
+}
+
+# Buildpack Steps.
 function puts-step (){
   echo "-----> $@"
+}
+
+# Buildpack Warnings.
+function puts-warn (){
+  echo " !     $@"
+}
+
+# Usage: $ set-env key value
+function set-env (){
+  echo "export $1=$2" >> $PROFILE_PATH
+}
+
+# Usage: $ set-default-env key value
+function set-default-env (){
+  echo "export $1=\${$1:-$2}" >> $PROFILE_PATH
+}
+
+# Usage: $ set-default-env key value
+function un-set-env (){
+  echo "unset $1" >> $PROFILE_PATH
 }
 
 # Does some serious copying.
@@ -55,16 +81,6 @@ function deep-mv (){
 
   rm -fr $1/!(tmp)
   find -H $1 -maxdepth 1 -name '.*' -a \( -type d -o -type f -o -type l \) -exec rm -fr '{}' \;
-}
-
-# Usage: $ set-env key value
-function set-env (){
-  echo "export $1=$2" >> $PROFILE_PATH
-}
-
-# Usage: $ set-default-env key value
-function set-default-env (){
-  echo "export $1=\${$1:-$2}" >> $PROFILE_PATH
 }
 
 # Directory Hacks for path consistiency.
@@ -108,7 +124,7 @@ mkdir -p $(dirname $PROFILE_PATH)
 
 if [ ! -d /app/.heroku/miniconda ]; then
     puts-step "Preparing Python/Miniconda Environment"
-    bash <(curl -s https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh) -p /app/.heroku/miniconda/ -b
+    bash <(curl -s https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh) -p /app/.heroku/miniconda/ -b | indent
 fi
 
 puts-step "Creating conda environment"

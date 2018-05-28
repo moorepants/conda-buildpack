@@ -30,6 +30,18 @@ unset GIT_DIR PYTHONHOME PYTHONPATH LD_LIBRARY_PATH LIBRARY_PATH
 # We'll need to send these statics to other scripts we `source`.
 export BUILD_DIR CACHE_DIR BIN_DIR PROFILE_PATH
 
+[ $(uname) == "Darwin" ] && SED_FLAG='-l' || SED_FLAG='-u'
+
+# Syntax sugar.
+indent() {
+  RE="s/^/       /"
+  sed $SED_FLAG "$RE"
+}
+
+function puts-step (){
+  echo "-----> $@"
+}
+
 # Does some serious copying.
 function deep-cp (){
   find -H $1 -maxdepth 1 -name '.*' -a \( -type d -o -type f -o -type l \) -exec cp -a '{}' $2 \;
@@ -97,8 +109,19 @@ set -e
 # Make profile.d directory.
 mkdir -p $(dirname $PROFILE_PATH)
 
-# Actuall do the conda steps.
-bash $BIN_DIR/steps/conda_compile
+if [ ! -d /app/.heroku/miniconda ]; then
+    puts-step "Preparing Python/Miniconda Environment"
+    bash <(curl -s https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh) -p /app/.heroku/miniconda/ -b | indent
+fi
+
+puts-step "Creating conda environment"
+# TODO: Use update if its already there
+conda env create -f environment-heroku.yml
+conda activate heroku-env
+
+# Clean up the installation environment .
+# TODO Determine if removing packages might be bad here
+conda clean -pt --yes > /dev/null
 
 # ### Finalize
 #

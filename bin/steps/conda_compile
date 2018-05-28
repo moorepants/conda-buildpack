@@ -1,19 +1,5 @@
 #!/usr/bin/env bash
 
-shopt -s extglob
-
-[ $(uname) == "Darwin" ] && SED_FLAG='-l' || SED_FLAG='-u'
-
-# Syntax sugar.
-indent() {
-  RE="s/^/       /"
-  sed $SED_FLAG "$RE"
-}
-
-function puts-step (){
-  echo "-----> $@"
-}
-
 if [ ! -d /app/.heroku/miniconda ]; then
     puts-step "Preparing Python/Miniconda Environment"
     bash <(curl -s https://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh) -p /app/.heroku/miniconda/ -b | indent

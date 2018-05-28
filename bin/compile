@@ -28,29 +28,20 @@ unset GIT_DIR PYTHONHOME PYTHONPATH LD_LIBRARY_PATH LIBRARY_PATH
 # We'll need to send these statics to other scripts we `source`.
 export BUILD_DIR CACHE_DIR BIN_DIR PROFILE_PATH
 
-shopt -s extglob
-
-[ $(uname) == "Darwin" ] && SED_FLAG='-l' || SED_FLAG='-u'
-
-# Syntax sugar.
-indent() {
-  RE="s/^/       /"
-  sed $SED_FLAG "$RE"
+# Does some serious copying.
+function deep-cp (){
+  find -H $1 -maxdepth 1 -name '.*' -a \( -type d -o -type f -o -type l \) -exec cp -a '{}' $2 \;
+  cp -r $1/!(tmp) $2
+  # echo copying $1 to $2
 }
 
-# Clean up pip output
-cleanup() {
-  sed $SED_FLAG -e 's/\.\.\.\+/.../g' | sed $SED_FLAG '/already satisfied/Id' | sed $SED_FLAG -e '/Overwriting/Id' |  sed $SED_FLAG -e '/python executable/Id' | sed $SED_FLAG -e '/no previously-included files/Id'
-}
 
-# Buildpack Steps.
-function puts-step (){
-  echo "-----> $@"
-}
+# Does some serious moving.
+function deep-mv (){
+  deep-cp $1 $2
 
-# Buildpack Warnings.
-function puts-warn (){
-  echo " !     $@"
+  rm -fr $1/!(tmp)
+  find -H $1 -maxdepth 1 -name '.*' -a \( -type d -o -type f -o -type l \) -exec rm -fr '{}' \;
 }
 
 # Usage: $ set-env key value
@@ -61,26 +52,6 @@ function set-env (){
 # Usage: $ set-default-env key value
 function set-default-env (){
   echo "export $1=\${$1:-$2}" >> $PROFILE_PATH
-}
-
-# Usage: $ set-default-env key value
-function un-set-env (){
-  echo "unset $1" >> $PROFILE_PATH
-}
-
-# Does some serious copying.
-function deep-cp (){
-  find -H $1 -maxdepth 1 -name '.*' -a \( -type d -o -type f -o -type l \) -exec cp -a '{}' $2 \;
-  cp -r $1/!(tmp) $2
-  # echo copying $1 to $2
-}
-
-# Does some serious moving.
-function deep-mv (){
-  deep-cp $1 $2
-
-  rm -fr $1/!(tmp)
-  find -H $1 -maxdepth 1 -name '.*' -a \( -type d -o -type f -o -type l \) -exec rm -fr '{}' \;
 }
 
 # Directory Hacks for path consistiency.

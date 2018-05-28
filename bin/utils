@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 shopt -s extglob
 
 [ $(uname) == "Darwin" ] && SED_FLAG='-l' || SED_FLAG='-u'

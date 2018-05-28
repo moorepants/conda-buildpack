@@ -29,7 +29,7 @@ unset GIT_DIR PYTHONHOME PYTHONPATH LD_LIBRARY_PATH LIBRARY_PATH
 export BUILD_DIR CACHE_DIR BIN_DIR PROFILE_PATH
 
 # Syntax sugar.
-bash $BIN_DIR/utils
+source $BIN_DIR/utils
 
 # Directory Hacks for path consistiency.
 APP_DIR='/app'
